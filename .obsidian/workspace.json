@@ -1,0 +1,44 @@
+{
+  "main": {
+    "id": "main",
+    "type": "split",
+    "children": [
+      {
+        "id": "leaf",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "rstat-proje-baglam.md",
+            "mode": "source"
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "left",
+    "type": "split",
+    "children": [
+      {
+        "id": "left-leaf",
+        "type": "leaf",
+        "state": {
+          "type": "file-explorer",
+          "state": {}
+        }
+      }
+    ],
+    "direction": "horizontal",
+    "width": 220
+  },
+  "right": {
+    "id": "right",
+    "type": "split",
+    "children": [],
+    "direction": "horizontal",
+    "width": 0
+  },
+  "active": "leaf"
+}

@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/rstat-core",
+    "crates/rstat-cli",
+]
+resolver = "2"
