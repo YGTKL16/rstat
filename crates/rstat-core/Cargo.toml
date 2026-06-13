@@ -7,3 +7,6 @@ edition = "2024"
 statrs = "0.18"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+proptest = "1"

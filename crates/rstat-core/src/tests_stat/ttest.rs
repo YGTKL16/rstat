@@ -261,3 +261,120 @@ mod tests {
         assert_eq!(ci[1], f64::INFINITY);
     }
 }
+
+// ── Property-based testler ────────────────────────────────────────────────────
+#[cfg(test)]
+mod prop_tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    // Geçerli veri seti stratejisi: 2-50 eleman, -1000.0..=1000.0 aralığı
+    fn valid_data(min_len: usize) -> impl Strategy<Value = Vec<f64>> {
+        prop::collection::vec(
+            // NaN ve sonsuzluk içermeyen, birbirinden farklı olabilecek değerler
+            proptest::num::f64::NORMAL,
+            min_len..=50,
+        )
+        // Tüm değerlerin aynı olduğu (std=0) durumu geçersiz — filtrele
+        .prop_filter("std sıfır olamaz", |v| {
+            let first = v[0];
+            v.iter().any(|&x| (x - first).abs() > f64::EPSILON)
+        })
+    }
+
+    proptest! {
+        // p-değeri her zaman [0, 1] aralığında olmalı
+        #[test]
+        fn prop_pvalue_in_range_one_sample(
+            data in valid_data(2),
+            mu0 in proptest::num::f64::NORMAL,
+        ) {
+            if let Ok(r) = one_sample(&data, mu0, Alternative::TwoSided, 0.95, 0.05) {
+                prop_assert!((0.0..=1.0).contains(&r.p_value),
+                    "p={} veri için [0,1] dışında", r.p_value);
+            }
+        }
+
+        // İki taraflı CI: alt sınır ≤ üst sınır
+        #[test]
+        fn prop_ci_lower_le_upper(
+            data in valid_data(2),
+            mu0 in proptest::num::f64::NORMAL,
+        ) {
+            if let Ok(r) = one_sample(&data, mu0, Alternative::TwoSided, 0.95, 0.05) {
+                let [lo, hi] = r.ci.unwrap();
+                prop_assert!(lo <= hi, "CI alt={lo} > üst={hi}");
+            }
+        }
+
+        // Two-sample Welch: p-değeri [0,1]
+        #[test]
+        fn prop_pvalue_in_range_two_sample(
+            a in valid_data(2),
+            b in valid_data(2),
+        ) {
+            if let Ok(r) = two_sample(&a, &b, Method::Welch, Alternative::TwoSided, 0.95, 0.05) {
+                prop_assert!((0.0..=1.0).contains(&r.p_value));
+            }
+        }
+
+        // Paired: p-değeri [0,1]
+        #[test]
+        fn prop_pvalue_in_range_paired(data in valid_data(2)) {
+            // paired için aynı uzunlukta iki vektör: data'yı ikiye böl
+            let n = data.len() / 2;
+            if n < 2 { return Ok(()); }
+            let a = &data[..n];
+            let b = &data[n..n + n]; // aynı uzunluk garantisi
+            if let Ok(r) = paired(a, b, Alternative::TwoSided, 0.95, 0.05) {
+                prop_assert!((0.0..=1.0).contains(&r.p_value));
+            }
+        }
+
+        // Cohen's d işareti mean_diff ile aynı yönde olmalı
+        #[test]
+        fn prop_cohens_d_sign_matches_mean_diff(
+            data in valid_data(2),
+            mu0 in proptest::num::f64::NORMAL,
+        ) {
+            if let Ok(r) = one_sample(&data, mu0, Alternative::TwoSided, 0.95, 0.05) {
+                if let (Some(d), Some(diff)) = (r.cohens_d, r.mean_diff) {
+                    if diff.abs() > f64::EPSILON {
+                        prop_assert!(d.signum() == diff.signum(),
+                            "Cohen's d={} mean_diff={} ters işaret", d, diff);
+                    }
+                }
+            }
+        }
+
+        // Simetrik veri (X ve -X): mean ≈ 0 olduğunda one-sample mu0=0 → |t| küçük
+        #[test]
+        fn prop_symmetric_data_small_t(base in valid_data(3)) {
+            // Simetrikleştir: [x1, x2, ...] → [x1, -x1, x2, -x2, ...]
+            let sym: Vec<f64> = base.iter().flat_map(|&x| [x, -x]).collect();
+            if let Ok(r) = one_sample(&sym, 0.0, Alternative::TwoSided, 0.95, 0.05) {
+                // Ortalama tam olarak 0 olacak, t istatistiği ~0 ve p ~1 olmalı
+                prop_assert!(r.statistic.abs() < 1e-9,
+                    "Simetrik veri için |t|={} > 0 bekleniyordu", r.statistic.abs());
+                prop_assert!(r.p_value > 0.5,
+                    "Simetrik veri için p={} > 0.5 bekleniyordu", r.p_value);
+            }
+        }
+
+        // Greater alternative: p = 1 - p(Less) kontrolü (complementary)
+        #[test]
+        fn prop_greater_less_complement(
+            data in valid_data(2),
+            mu0 in proptest::num::f64::NORMAL,
+        ) {
+            let r_g = one_sample(&data, mu0, Alternative::Greater, 0.95, 0.05);
+            let r_l = one_sample(&data, mu0, Alternative::Less, 0.95, 0.05);
+            if let (Ok(g), Ok(l)) = (r_g, r_l) {
+                prop_assert!(
+                    (g.p_value + l.p_value - 1.0).abs() < 1e-10,
+                    "p(greater)={} + p(less)={} ≠ 1", g.p_value, l.p_value
+                );
+            }
+        }
+    }
+}
