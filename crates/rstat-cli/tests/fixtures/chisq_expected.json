@@ -1,0 +1,90 @@
+{
+  "tolerance": 1e-09,
+  "independence_2x2_yates": {
+    "statistic": 0.128,
+    "p_value": 0.7205147871362552,
+    "df": 1.0,
+    "cramers_v": 0.06666666666666667,
+    "expected": [
+      [
+        11.25,
+        18.75
+      ],
+      [
+        18.75,
+        31.25
+      ]
+    ],
+    "warning_low_expected": false
+  },
+  "independence_2x2_no_yates": {
+    "statistic": 0.3555555555555555,
+    "p_value": 0.5509849875850935,
+    "df": 1.0,
+    "cramers_v": 0.06666666666666667,
+    "expected": [
+      [
+        11.25,
+        18.75
+      ],
+      [
+        18.75,
+        31.25
+      ]
+    ],
+    "warning_low_expected": false
+  },
+  "independence_3x3": {
+    "statistic": 13.475667189952903,
+    "p_value": 0.009170973436806423,
+    "df": 4.0,
+    "cramers_v": 0.1908421393063069,
+    "expected": [
+      [
+        26.486486486486488,
+        18.91891891891892,
+        24.594594594594593
+      ],
+      [
+        17.027027027027028,
+        12.162162162162161,
+        15.81081081081081
+      ],
+      [
+        26.486486486486488,
+        18.91891891891892,
+        24.594594594594593
+      ]
+    ],
+    "warning_low_expected": false
+  },
+  "independence_long_yates": {
+    "statistic": 9.955555555555556,
+    "p_value": 0.0016036472624141077,
+    "df": 1.0,
+    "cramers_v": 0.37796447300922725,
+    "expected": [
+      [
+        22.5,
+        17.5
+      ],
+      [
+        22.5,
+        17.5
+      ]
+    ],
+    "warning_low_expected": false
+  },
+  "gof": {
+    "statistic": 2.0,
+    "p_value": 0.36787944117144245,
+    "df": 2.0,
+    "warning_low_expected": false
+  },
+  "gof_low": {
+    "statistic": 0.27777777777777757,
+    "p_value": 0.598161452683528,
+    "df": 1.0,
+    "warning_low_expected": true
+  }
+}

@@ -1,1 +1,6 @@
 /target
+/.claude
+/graphify-out
+.DS_Store
+.idea/
+.vscode/

@@ -10,7 +10,14 @@ fn cmd() -> Command {
 #[test]
 fn summary_file_json() {
     let out = cmd()
-        .args(["summary", "tests/fixtures/one_col.csv", "--col", "value", "--format", "json"])
+        .args([
+            "summary",
+            "tests/fixtures/one_col.csv",
+            "--col",
+            "value",
+            "--format",
+            "json",
+        ])
         .assert()
         .success()
         .get_output()
@@ -44,7 +51,14 @@ fn summary_stdin_json() {
 #[test]
 fn summary_with_na_skips_rows() {
     let out = cmd()
-        .args(["summary", "tests/fixtures/with_na.csv", "--col", "value", "--format", "json"])
+        .args([
+            "summary",
+            "tests/fixtures/with_na.csv",
+            "--col",
+            "value",
+            "--format",
+            "json",
+        ])
         .assert()
         .success()
         .get_output()
@@ -118,8 +132,5 @@ fn summary_nonexistent_col_fails() {
 
 #[test]
 fn summary_nonexistent_file_fails() {
-    cmd()
-        .args(["summary", "yok.csv"])
-        .assert()
-        .failure();
+    cmd().args(["summary", "yok.csv"]).assert().failure();
 }

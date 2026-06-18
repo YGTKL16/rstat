@@ -1,29 +1,6 @@
+use super::OutputFormat;
 use comfy_table::{Table, presets::UTF8_BORDERS_ONLY};
-use rstat_core::result::{SummaryStats, TTestResult};
-
-pub enum OutputFormat {
-    Table,
-    Json,
-    Csv,
-}
-
-impl OutputFormat {
-    /// TTY'de tablo, pipe'ta JSON
-    pub fn detect(flag: Option<&str>) -> Self {
-        match flag {
-            Some("json") => Self::Json,
-            Some("csv") => Self::Csv,
-            Some("table") => Self::Table,
-            _ => {
-                if atty::is(atty::Stream::Stdout) {
-                    Self::Table
-                } else {
-                    Self::Json
-                }
-            }
-        }
-    }
-}
+use rstat_core::result::TTestResult;
 
 pub fn print_ttest(r: &TTestResult, fmt: OutputFormat) {
     match fmt {
@@ -31,15 +8,22 @@ pub fn print_ttest(r: &TTestResult, fmt: OutputFormat) {
             println!("{}", serde_json::to_string_pretty(r).unwrap());
         }
         OutputFormat::Csv => {
-            println!("test,method,alternative,statistic,df,p_value,mean_diff,ci_low,ci_high,cohens_d,reject_null");
+            println!(
+                "test,method,alternative,statistic,df,p_value,mean_diff,ci_low,ci_high,cohens_d,reject_null"
+            );
             let ci_low = r.ci.map(|c| c[0].to_string()).unwrap_or_default();
             let ci_high = r.ci.map(|c| c[1].to_string()).unwrap_or_default();
             println!(
                 "{},{},{},{:.10},{:.6},{:.10},{},{},{},{},{}",
-                r.test, r.method, r.alternative,
-                r.statistic, r.df, r.p_value,
+                r.test,
+                r.method,
+                r.alternative,
+                r.statistic,
+                r.df,
+                r.p_value,
                 r.mean_diff.map(|v| format!("{v:.10}")).unwrap_or_default(),
-                ci_low, ci_high,
+                ci_low,
+                ci_high,
                 r.cohens_d.map(|v| format!("{v:.10}")).unwrap_or_default(),
                 r.reject_null,
             );
@@ -89,36 +73,6 @@ pub fn print_ttest(r: &TTestResult, fmt: OutputFormat) {
 
             println!("{grp}");
             println!("{tbl}");
-        }
-    }
-}
-
-pub fn print_summary(stats: &SummaryStats, fmt: OutputFormat) {
-    match fmt {
-        OutputFormat::Json => {
-            println!("{}", serde_json::to_string_pretty(stats).unwrap());
-        }
-        OutputFormat::Csv => {
-            println!("n,mean,std,min,q1,median,q3,max");
-            println!(
-                "{},{},{},{},{},{},{},{}",
-                stats.n, stats.mean, stats.std, stats.min,
-                stats.q1, stats.median, stats.q3, stats.max
-            );
-        }
-        OutputFormat::Table => {
-            let mut table = Table::new();
-            table.load_preset(UTF8_BORDERS_ONLY);
-            table.set_header(vec!["İstatistik", "Değer"]);
-            table.add_row(vec!["n", &stats.n.to_string()]);
-            table.add_row(vec!["mean", &format!("{:.6}", stats.mean)]);
-            table.add_row(vec!["std", &format!("{:.6}", stats.std)]);
-            table.add_row(vec!["min", &format!("{:.6}", stats.min)]);
-            table.add_row(vec!["Q1", &format!("{:.6}", stats.q1)]);
-            table.add_row(vec!["median", &format!("{:.6}", stats.median)]);
-            table.add_row(vec!["Q3", &format!("{:.6}", stats.q3)]);
-            table.add_row(vec!["max", &format!("{:.6}", stats.max)]);
-            println!("{table}");
         }
     }
 }

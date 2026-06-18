@@ -1,4 +1,4 @@
-use statrs::distribution::{ContinuousCDF, StudentsT};
+use statrs::distribution::{ChiSquared, ContinuousCDF, FisherSnedecor, StudentsT};
 
 use crate::error::StatError;
 
@@ -102,6 +102,34 @@ pub fn ci_bounds(
     })
 }
 
+/// F istatistiğinden p-değeri (daima sağ kuyruk)
+pub fn p_value_f(f: f64, df1: f64, df2: f64) -> Result<f64, StatError> {
+    if !df1.is_finite() || df1 <= 0.0 || !df2.is_finite() || df2 <= 0.0 {
+        return Err(StatError::InvalidParameter(format!(
+            "geçersiz df: df1={df1}, df2={df2}"
+        )));
+    }
+    if f.is_nan() {
+        return Err(StatError::Numerical("F istatistiği NaN".into()));
+    }
+    let dist = FisherSnedecor::new(df1, df2)
+        .map_err(|e| StatError::Numerical(format!("F-dağılımı kurulamadı: {e}")))?;
+    Ok((1.0 - dist.cdf(f)).clamp(0.0, 1.0))
+}
+
+/// Chi-square istatistiğinden p-değeri
+pub fn p_value_chi2(chi_sq: f64, df: f64) -> Result<f64, StatError> {
+    if !df.is_finite() || df <= 0.0 {
+        return Err(StatError::InvalidParameter(format!("geçersiz df: df={df}")));
+    }
+    if chi_sq.is_nan() {
+        return Err(StatError::Numerical("chi_sq istatistiği NaN".into()));
+    }
+    let dist = ChiSquared::new(df)
+        .map_err(|e| StatError::Numerical(format!("χ²-dağılımı kurulamadı: {e}")))?;
+    Ok((1.0 - dist.cdf(chi_sq)).clamp(0.0, 1.0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -145,5 +173,43 @@ mod tests {
     fn test_invalid_ci_level() {
         assert!(critical_t(0.0, 10.0).is_err());
         assert!(critical_t(1.0, 10.0).is_err());
+    }
+
+    #[test]
+    fn test_p_value_f() {
+        // scipy: stats.f.sf(3.5, 2, 10) -> 0.07042962777237427
+        let p = p_value_f(3.5, 2.0, 10.0).unwrap();
+        assert!((p - 0.07042962777237427).abs() < 1e-10, "p={p}");
+
+        // scipy: stats.f.sf(1.0, 1, 1) -> 0.5
+        let p = p_value_f(1.0, 1.0, 1.0).unwrap();
+        assert!((p - 0.5).abs() < 1e-10, "p={p}");
+
+        // scipy: stats.f.sf(0.5, 4, 20) -> 0.7360371889109243
+        let p = p_value_f(0.5, 4.0, 20.0).unwrap();
+        assert!((p - 0.7360371889109243).abs() < 1e-10, "p={p}");
+
+        // scipy: stats.f.sf(10.2, 5, 12) -> 0.0005361417572438391
+        let p = p_value_f(10.2, 5.0, 12.0).unwrap();
+        assert!((p - 0.0005361417572438391).abs() < 1e-10, "p={p}");
+    }
+
+    #[test]
+    fn test_p_value_chi2() {
+        // scipy: stats.chi2.sf(5.5, 3) -> 0.1386386173824151
+        let p = p_value_chi2(5.5, 3.0).unwrap();
+        assert!((p - 0.1386386173824151).abs() < 1e-10, "p={p}");
+
+        // scipy: stats.chi2.sf(1.2, 1) -> 0.273321678292295
+        let p = p_value_chi2(1.2, 1.0).unwrap();
+        assert!((p - 0.273321678292295).abs() < 1e-10, "p={p}");
+
+        // scipy: stats.chi2.sf(15.0, 5) -> 0.010362337915786429
+        let p = p_value_chi2(15.0, 5.0).unwrap();
+        assert!((p - 0.010362337915786429).abs() < 1e-10, "p={p}");
+
+        // scipy: stats.chi2.sf(0.5, 2) -> 0.7788007830714049
+        let p = p_value_chi2(0.5, 2.0).unwrap();
+        assert!((p - 0.7788007830714049).abs() < 1e-10, "p={p}");
     }
 }

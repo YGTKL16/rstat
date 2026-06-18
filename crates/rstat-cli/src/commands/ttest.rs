@@ -7,8 +7,7 @@ use crate::io::{read_column, read_two_columns};
 use crate::render::{OutputFormat, print_ttest};
 
 pub fn run(args: TtestArgs) -> Result<()> {
-    let alt = Alternative::parse(&args.alt)
-        .map_err(|e| anyhow::anyhow!("{e}"))?;
+    let alt = Alternative::parse(&args.alt).map_err(|e| anyhow::anyhow!("{e}"))?;
 
     let result = match args.kind.as_str() {
         "one" => {
@@ -17,9 +16,16 @@ pub fn run(args: TtestArgs) -> Result<()> {
                 .map_err(|e| anyhow::anyhow!("{e}"))?
         }
         "two" => {
-            let col2 = args.col2.as_deref().context("two-sample için --col2 gerekli")?;
+            let col2 = args
+                .col2
+                .as_deref()
+                .context("two-sample için --col2 gerekli")?;
             let (a, b) = read_two_columns(&args.file, &args.col, col2)?;
-            let method = if args.var == "pooled" { Method::Pooled } else { Method::Welch };
+            let method = if args.var == "pooled" {
+                Method::Pooled
+            } else {
+                Method::Welch
+            };
             ttest::two_sample(&a, &b, method, alt, args.ci_level, args.alpha)
                 .map_err(|e| anyhow::anyhow!("{e}"))?
         }

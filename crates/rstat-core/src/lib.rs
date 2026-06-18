@@ -1,5 +1,9 @@
+pub mod capability;
 pub mod data;
 pub mod dist;
 pub mod error;
+pub mod interval;
+pub mod license;
 pub mod result;
+pub mod spc;
 pub mod tests_stat;

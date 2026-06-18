@@ -12,7 +12,10 @@ pub fn mean(data: &[f64]) -> Result<f64, StatError> {
 /// büyük değerlerde cancellation hatası olmaz.
 pub fn variance(data: &[f64]) -> Result<f64, StatError> {
     if data.len() < 2 {
-        return Err(StatError::InsufficientData { required: 2, got: data.len() });
+        return Err(StatError::InsufficientData {
+            required: 2,
+            got: data.len(),
+        });
     }
     let mut mean = 0.0_f64;
     let mut m2 = 0.0_f64;

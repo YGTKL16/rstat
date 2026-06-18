@@ -52,7 +52,12 @@ pub fn one_sample(
         test: "one-sample",
         method: "one-sample",
         alternative: alt.as_str().to_string(),
-        groups: vec![GroupStats { name: "x".into(), n, mean: xbar, std: s }],
+        groups: vec![GroupStats {
+            name: "x".into(),
+            n,
+            mean: xbar,
+            std: s,
+        }],
         statistic: t,
         df,
         p_value: pv,
@@ -89,7 +94,9 @@ pub fn two_sample(
             let df = (e1 + e2).powi(2)
                 / (e1.powi(2) / (n1 as f64 - 1.0) + e2.powi(2) / (n2 as f64 - 1.0));
             if !df.is_finite() || df <= 0.0 {
-                return Err(StatError::Numerical(format!("Welch df hesaplanamadı: {df}")));
+                return Err(StatError::Numerical(format!(
+                    "Welch df hesaplanamadı: {df}"
+                )));
             }
             (t, df, se)
         }
@@ -116,8 +123,18 @@ pub fn two_sample(
         method: method.as_str(),
         alternative: alt.as_str().to_string(),
         groups: vec![
-            GroupStats { name: "a".into(), n: n1, mean: m1, std: s1 },
-            GroupStats { name: "b".into(), n: n2, mean: m2, std: s2 },
+            GroupStats {
+                name: "a".into(),
+                n: n1,
+                mean: m1,
+                std: s1,
+            },
+            GroupStats {
+                name: "b".into(),
+                n: n2,
+                mean: m2,
+                std: s2,
+            },
         ],
         statistic: t,
         df,
@@ -139,12 +156,17 @@ pub fn paired(
     alpha: f64,
 ) -> Result<TTestResult, StatError> {
     if a.len() != b.len() {
-        return Err(StatError::LengthMismatch { a: a.len(), b: b.len() });
+        return Err(StatError::LengthMismatch {
+            a: a.len(),
+            b: b.len(),
+        });
     }
     let diff: Vec<f64> = a.iter().zip(b.iter()).map(|(x, y)| x - y).collect();
     let (n, dbar, _, sd) = describe(&diff)?;
     if sd == 0.0 {
-        return Err(StatError::Numerical("farkların standart sapması sıfır".into()));
+        return Err(StatError::Numerical(
+            "farkların standart sapması sıfır".into(),
+        ));
     }
     let se = sd / (n as f64).sqrt();
     let t = dbar / se;
@@ -161,8 +183,18 @@ pub fn paired(
         method: "paired",
         alternative: alt.as_str().to_string(),
         groups: vec![
-            GroupStats { name: "a".into(), n, mean: m1, std: s1 },
-            GroupStats { name: "b".into(), n, mean: m2, std: s2 },
+            GroupStats {
+                name: "a".into(),
+                n,
+                mean: m1,
+                std: s1,
+            },
+            GroupStats {
+                name: "b".into(),
+                n,
+                mean: m2,
+                std: s2,
+            },
         ],
         statistic: t,
         df,
@@ -194,8 +226,16 @@ mod tests {
     #[test]
     fn test_one_sample_two_sided() {
         let r = one_sample(X, 5.0, Alternative::TwoSided, 0.95, 0.05).unwrap();
-        assert!((r.statistic - 2.2292973506512723).abs() < 1e-10, "t={}", r.statistic);
-        assert!((r.p_value - 0.05275727446494313).abs() < 1e-10, "p={}", r.p_value);
+        assert!(
+            (r.statistic - 2.2292973506512723).abs() < 1e-10,
+            "t={}",
+            r.statistic
+        );
+        assert!(
+            (r.p_value - 0.05275727446494313).abs() < 1e-10,
+            "p={}",
+            r.p_value
+        );
         assert!((r.df - 9.0).abs() < 1e-10);
         assert!(!r.reject_null);
     }
@@ -203,24 +243,48 @@ mod tests {
     #[test]
     fn test_two_sample_welch_two_sided() {
         let r = two_sample(A, B, Method::Welch, Alternative::TwoSided, 0.95, 0.05).unwrap();
-        assert!((r.statistic - 1.1198635152570917).abs() < 1e-10, "t={}", r.statistic);
-        assert!((r.p_value - 0.28162172376376).abs() < 1e-10, "p={}", r.p_value);
+        assert!(
+            (r.statistic - 1.1198635152570917).abs() < 1e-10,
+            "t={}",
+            r.statistic
+        );
+        assert!(
+            (r.p_value - 0.28162172376376).abs() < 1e-10,
+            "p={}",
+            r.p_value
+        );
         assert!((r.df - 13.996246042536976).abs() < 1e-10, "df={}", r.df);
     }
 
     #[test]
     fn test_two_sample_pooled_two_sided() {
         let r = two_sample(A, B, Method::Pooled, Alternative::TwoSided, 0.95, 0.05).unwrap();
-        assert!((r.statistic - 1.1198635152570917).abs() < 1e-10, "t={}", r.statistic);
-        assert!((r.p_value - 0.2816167684249695).abs() < 1e-10, "p={}", r.p_value);
+        assert!(
+            (r.statistic - 1.1198635152570917).abs() < 1e-10,
+            "t={}",
+            r.statistic
+        );
+        assert!(
+            (r.p_value - 0.2816167684249695).abs() < 1e-10,
+            "p={}",
+            r.p_value
+        );
         assert!((r.df - 14.0).abs() < 1e-10, "df={}", r.df);
     }
 
     #[test]
     fn test_paired_two_sided() {
         let r = paired(P1, P2, Alternative::TwoSided, 0.95, 0.05).unwrap();
-        assert!((r.statistic - 7.905694150420959).abs() < 1e-10, "t={}", r.statistic);
-        assert!((r.p_value - 0.0005210669895035266).abs() < 1e-10, "p={}", r.p_value);
+        assert!(
+            (r.statistic - 7.905694150420959).abs() < 1e-10,
+            "t={}",
+            r.statistic
+        );
+        assert!(
+            (r.p_value - 0.0005210669895035266).abs() < 1e-10,
+            "p={}",
+            r.p_value
+        );
         assert!((r.df - 5.0).abs() < 1e-10);
         assert!(r.reject_null);
     }
@@ -244,7 +308,11 @@ mod tests {
     #[test]
     fn test_one_sample_less() {
         let r = one_sample(X, 5.0, Alternative::Less, 0.95, 0.05).unwrap();
-        assert!((r.p_value - 0.9736213627675284).abs() < 1e-10, "p={}", r.p_value);
+        assert!(
+            (r.p_value - 0.9736213627675284).abs() < 1e-10,
+            "p={}",
+            r.p_value
+        );
         // Tek-yönlü CI: [-∞, ub]
         let ci = r.ci.unwrap();
         assert_eq!(ci[0], f64::NEG_INFINITY);
@@ -254,7 +322,11 @@ mod tests {
     #[test]
     fn test_one_sample_greater() {
         let r = one_sample(X, 5.0, Alternative::Greater, 0.95, 0.05).unwrap();
-        assert!((r.p_value - 0.026378637232471566).abs() < 1e-10, "p={}", r.p_value);
+        assert!(
+            (r.p_value - 0.026378637232471566).abs() < 1e-10,
+            "p={}",
+            r.p_value
+        );
         // Tek-yönlü CI: [lb, +∞]
         let ci = r.ci.unwrap();
         assert!(ci[0].is_finite());
@@ -338,11 +410,10 @@ mod prop_tests {
             mu0 in proptest::num::f64::NORMAL,
         ) {
             if let Ok(r) = one_sample(&data, mu0, Alternative::TwoSided, 0.95, 0.05) {
-                if let (Some(d), Some(diff)) = (r.cohens_d, r.mean_diff) {
-                    if diff.abs() > f64::EPSILON {
-                        prop_assert!(d.signum() == diff.signum(),
-                            "Cohen's d={} mean_diff={} ters işaret", d, diff);
-                    }
+                let (d, diff) = (r.cohens_d, r.mean_diff);
+                if let (Some(d_val), Some(diff_val)) = (d, diff) {
+                    prop_assert!(diff_val.abs() <= f64::EPSILON || d_val.signum() == diff_val.signum(),
+                        "Cohen's d={} mean_diff={} ters işaret", d_val, diff_val);
                 }
             }
         }

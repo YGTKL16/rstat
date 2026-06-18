@@ -16,4 +16,7 @@ pub enum StatError {
 
     #[error("sayısal hata: {0}")]
     Numerical(String),
+
+    #[error("lisans gerekli: {0}")]
+    LicenseRequired(String),
 }

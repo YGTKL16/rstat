@@ -1,0 +1,96 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  plan:
+    name: Plan Release
+    runs-on: ubuntu-latest
+    outputs:
+      val: ${{ steps.plan.outputs.manifest }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-dist
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/latest/download/cargo-dist-installer.sh | sh
+      - id: plan
+        run: cargo dist plan --tag=${{ github.ref_name }} --output-format=json > dist-manifest.json && echo "manifest=$(cat dist-manifest.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-dist-manifest
+          path: dist-manifest.json
+
+  build-local-artifacts:
+    name: Build ${{ matrix.display_name }}
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            dist-args: --artifacts=local --target=x86_64-unknown-linux-musl
+            display_name: Linux x86_64 (musl)
+          - os: ubuntu-22.04
+            dist-args: --artifacts=local --target=aarch64-unknown-linux-musl
+            display_name: Linux ARM64 (musl)
+          - os: macos-13
+            dist-args: --artifacts=local --target=x86_64-apple-darwin
+            display_name: macOS Intel
+          - os: macos-14
+            dist-args: --artifacts=local --target=aarch64-apple-darwin
+            display_name: macOS Apple Silicon
+          - os: windows-2022
+            dist-args: --artifacts=local --target=x86_64-pc-windows-msvc
+            display_name: Windows x86_64
+    runs-on: ${{ matrix.os }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-dist
+        shell: bash
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/latest/download/cargo-dist-installer.sh | sh
+      - name: Install musl-tools (Linux musl için)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y musl-tools
+      - name: Build artifacts
+        run: cargo dist build ${{ matrix.dist-args }} --output-format=json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.os }}
+          path: target/distrib/
+
+  publish-github-release:
+    name: Publish GitHub Release
+    needs: [plan, build-local-artifacts]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: artifacts
+          merge-multiple: true
+      - name: Generate SHA256 checksums
+        run: |
+          cd artifacts
+          sha256sum rstat-cli-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Install cargo-dist
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/latest/download/cargo-dist-installer.sh | sh
+      - name: Publish Release
+        run: cargo dist publish --tag=${{ github.ref_name }} --artifacts=artifacts/

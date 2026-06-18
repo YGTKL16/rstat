@@ -2,5 +2,26 @@
 members = [
     "crates/rstat-core",
     "crates/rstat-cli",
+    "crates/rstat-license",
+    "crates/rstat-keygen",
 ]
 resolver = "2"
+
+[workspace.metadata.dist]
+cargo-dist-version = "0.28.0"
+ci = "github"
+targets = [
+    "x86_64-unknown-linux-musl",
+    "aarch64-unknown-linux-musl",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]
+installers = ["shell", "powershell"]
+tap = "ygtkula/homebrew-rstat"
+publish-jobs = ["homebrew"]
+pr-run-mode = "plan"
+
+[profile.dist]
+inherits = "release"
+lto = "thin"
