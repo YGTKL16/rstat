@@ -43,8 +43,5 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: test-${{ hashFiles('**/Cargo.lock') }}
-      # Run tests with RSTAT_PRO=1 so license checking tests succeed.
-      # Also set test-threads=1 to prevent environment variable race conditions in tests.
+      # Run tests with 1 thread to prevent environment variable race conditions in tests.
       - run: cargo test --workspace --all-features -- --test-threads=1
-        env:
-          RSTAT_PRO: "1"
