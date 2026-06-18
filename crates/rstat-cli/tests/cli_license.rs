@@ -14,7 +14,7 @@ const VALID_LICENSE_JSON: &str = r#"{
     "spc",
     "capability"
   ],
-  "signature": "BDAzEguECXEkTwDlocZZjn+mNOim9vPkB/7b9bPWosXuJScBBC4sNb01CsWZuxhlhJShgUm349hbTQnz4VNJAQ=="
+  "signature": "W3N39oKmvucuHaPH0/CYceOi8mmDc6a2EMt8LnhBuyUvzgo2e6GQGEmnaAdBMePEu8/uCUNdc8a4UhgnOMt1Cg=="
 }"#;
 
 #[test]

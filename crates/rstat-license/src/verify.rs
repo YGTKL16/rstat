@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub const EMBEDDED_PUBLIC_KEY_HEX: &str =
-    "a3eb9cc3d582dd90324368ab3e7e613c2e887d39497cf33c6fc73c7a706d16a9";
+    "ff688fdfa4a89559e9422e3fd2a4660eaf8d1a24c75a5cbd0ea8f7891f4046a2";
 
 #[derive(Error, Debug)]
 pub enum LicenseError {
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_embedded_key_verification() {
         // Our recorded private key matching EMBEDDED_PUBLIC_KEY_HEX
-        let priv_key_hex = "6866f18b94014e2aedb0082362f3656791f589a97c70e1265c15622986b01147";
+        let priv_key_hex = "4bbcd1e690b9f32e436311b84deaab6763097cd67cf4ae13d8c41dd0f2987418";
         let priv_key_bytes = hex::decode(priv_key_hex).unwrap();
         let priv_key_array: [u8; 32] = priv_key_bytes.try_into().unwrap();
         let signing_key = SigningKey::from_bytes(&priv_key_array);
